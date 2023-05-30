@@ -1,0 +1,24 @@
+#!/bin/bash
+#PBS -A lp_edu_evol_quant_genetics
+#PBS -l walltime=0:05:00
+#PBS -l nodes=1:ppn=8
+
+cd $VSC_SCRATCH/CompAss/trees
+module purge
+module load BLAST+
+
+list=$(dir proteomes)
+for entry in $list
+do
+makeblastdb -in ./proteomes/$entry -dbtype prot -parse-seqids -out $entry
+blastp -query bbh.fasta -db $entry -outfmt 6 -out ./blast/$entry.out -num_threads 8
+done
+
+cd blast
+rm -f res.filtered
+list=$(dir)
+for file in $list
+do
+cat $file | awk '$11 < 0.00001' >> res.filtered
+done
+cat res.filtered | awk '{print $2}' | sort -u > homologs_ids 
